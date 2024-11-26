@@ -3,13 +3,7 @@ return {
   event = "VeryLazy",
   lazy = false,
   version = false, -- set this if you want to always pull the latest change
-  opts = {
-    provider = "openai",
-    auto_suggestions_provider = "openai",
-    openai = {
-      model = "gpt-4o",
-    }
-  },
+  opts = {},
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
   build = "make",
   -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
