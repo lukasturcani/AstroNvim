@@ -12,8 +12,6 @@ return {
       -- first key is the mode
       n = {
         ["<Leader>w"] = { ":wa!<cr>", desc = "Save All Files" },
-      },
-      n = {
         ["aC"] = { ":AvanteClear<cr>", desc = "Clear Avante Cache" },
       }
     },
