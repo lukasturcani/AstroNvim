@@ -1,5 +1,3 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- Customize None-ls sources
 
 ---@type LazySpec
@@ -19,7 +17,7 @@ return {
       -- Set a formatter
       -- null_ls.builtins.formatting.stylua,
       -- null_ls.builtins.formatting.prettier,
-      -- null_ls.builtins.diagnostics.mypy,
+      null_ls.builtins.diagnostics.mypy,
     })
   end,
 }
