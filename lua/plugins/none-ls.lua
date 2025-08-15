@@ -5,20 +5,18 @@
 return {
   "nvimtools/none-ls.nvim",
   opts = function(_, opts)
-    -- opts variable is the default configuration table for the setup function call
     local null_ls = require "null-ls"
 
-    -- Check supported formatters and linters
-    -- https://github.com/nvimtools/none-ls.nvim/tree/main/lua/null-ls/builtins/formatting
-    -- https://github.com/nvimtools/none-ls.nvim/tree/main/lua/null-ls/builtins/diagnostics
+    local function is_site_packages(path)
+      return path:match("/site%-packages/") or path:match("/dist%-packages/")
+          or path:match("\\Lib\\site%-packages\\")
+    end
 
-    -- Only insert new sources, do not replace the existing ones
-    -- (If you wish to replace, use `opts.sources = {}` instead of the `list_insert_unique` function)
     opts.sources = require("astrocore").list_insert_unique(opts.sources, {
-      -- Set a formatter
-      -- null_ls.builtins.formatting.stylua,
-      -- null_ls.builtins.formatting.prettier,
       null_ls.builtins.diagnostics.mypy.with({
+          runtime_condition = function(params)
+            return params.bufname ~= "" and not is_site_packages(params.bufname)
+          end,
         timeout = -1,
       }),
     })
