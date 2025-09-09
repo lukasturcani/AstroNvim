@@ -13,7 +13,10 @@ return {
         settings = {
           python = {
             analysis = {
-              typeCheckingMode = "off"
+              typeCheckingMode = "off",
+              diagnosticSeverityOverrides = {
+                reportInvalidTypeForm = "none"
+              }
             }
           }
         }
