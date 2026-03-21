@@ -4,32 +4,25 @@ return {
     local orig = opts.on_attach
     opts.on_attach = function(bufnr)
       if orig then orig(bufnr) end
-      vim.keymap.set("n", "<Leader>gd", function()
-        if vim.wo.diff then
-          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-            if vim.wo[win].diff and vim.bo[vim.api.nvim_win_get_buf(win)].buftype ~= "" then
-              vim.api.nvim_win_close(win, true)
-              return
-            end
+      local diff_tab = nil
+
+      local function open_diff(base, suffix)
+        vim.keymap.set("n", "<Leader>g" .. suffix, function()
+          if diff_tab and vim.api.nvim_tabpage_is_valid(diff_tab) then
+            -- Close the diff tab, which restores us to the previous tab
+            local tab_nr = vim.api.nvim_tabpage_get_number(diff_tab)
+            vim.cmd("tabclose " .. tab_nr)
+            diff_tab = nil
+          else
+            -- Open a new tab with the current buffer, then diff
+            vim.cmd("tab split")
+            diff_tab = vim.api.nvim_get_current_tabpage()
+            require("gitsigns").diffthis(base)
           end
-          vim.wo.diff = false
-        else
-          require("gitsigns").diffthis()
-        end
-      end, { buffer = bufnr, desc = "Toggle Git diff" })
-      vim.keymap.set("n", "<Leader>gdm", function()
-        if vim.wo.diff then
-          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-            if vim.wo[win].diff and vim.bo[vim.api.nvim_win_get_buf(win)].buftype ~= "" then
-              vim.api.nvim_win_close(win, true)
-              return
-            end
-          end
-          vim.wo.diff = false
-        else
-          require("gitsigns").diffthis("main")
-        end
-      end, { buffer = bufnr, desc = "Toggle Git diff against main" })
+        end, { buffer = bufnr, desc = "Toggle Git diff" .. (base and (" against " .. base) or "") })
+      end
+      open_diff(nil, "d")
+      open_diff("main", "dm")
     end
   end,
 }
