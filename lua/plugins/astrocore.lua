@@ -12,7 +12,7 @@ return {
       -- first key is the mode
       n = {
         ["<Leader>w"] = { ":wa!<cr>", desc = "Save All Files" },
-        ["aC"] = { ":AvanteClear<cr>", desc = "Clear Avante Cache" },
+        ["<Leader>gf"] = { ":Neotree git_status git_base=main<cr>", desc = "Git File Status" },
       }
     },
   },
