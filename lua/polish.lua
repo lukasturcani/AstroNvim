@@ -1,5 +1,13 @@
-if true then return end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
--- This will run last in the setup process.
--- This is just pure lua so anything that doesn't
--- fit in the normal config locations above can go here
+-- After session restore, the `diff` window option may be persisted from a
+-- previous diff view, which causes gitsigns diffthis() to silently no-op.
+vim.api.nvim_create_autocmd("User", {
+  pattern = "ResessionLoadPost",
+  group = vim.api.nvim_create_augroup("resession_diff_fix", { clear = true }),
+  callback = function()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      if vim.wo[win].diff then
+        vim.wo[win].diff = false
+      end
+    end
+  end,
+})
