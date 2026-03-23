@@ -31,6 +31,9 @@ return {
           if source then vim.cmd("Neotree show " .. source) end
           vim.api.nvim_set_current_win(file_win)
           require("gitsigns").diffthis(base)
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(diff_tab)) do
+            vim.wo[win].foldenable = false
+          end
         end
       end, { buffer = bufnr, desc = "Toggle Git diff (auto-detects base from Neo-tree)" })
     end
