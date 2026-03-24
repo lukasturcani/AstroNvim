@@ -14,6 +14,9 @@ local wrap = function(func)
   return utils.wrap(func, M.name)
 end
 
+local debounce_timer = nil
+local DEBOUNCE_MS = 500
+
 local function ensure_git_base(state)
   local root = git.find_worktree_info(state.path or vim.fn.getcwd())
   if root then
@@ -36,7 +39,13 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 end
 
 M.refresh = function()
-  manager.refresh(M.name)
+  if debounce_timer then
+    debounce_timer:stop()
+  end
+  debounce_timer = vim.defer_fn(function()
+    debounce_timer = nil
+    manager.refresh(M.name)
+  end, DEBOUNCE_MS)
 end
 
 M.setup = function(config, global_config)

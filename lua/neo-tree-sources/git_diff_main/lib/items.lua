@@ -2,19 +2,25 @@ local renderer = require("neo-tree.ui.renderer")
 local file_items = require("neo-tree.sources.common.file-items")
 local log = require("neo-tree.log")
 local git = require("neo-tree.git")
-local diff = require("neo-tree.git.diff")
 
 local M = {}
 
-M.get_git_status = function(state)
-  if state.loading then
-    return
+local function parse_name_status(output, worktree_root)
+  local lookup = {}
+  for line in output:gmatch("[^\n]+") do
+    local status, rest = line:match("^(%S+)\t(.+)$")
+    if status and rest then
+      -- Handle renames/copies: "R100\told\tnew" or "C100\told\tnew"
+      local new_path = rest:match("\t(.+)$")
+      local path = new_path or rest
+      local full_path = worktree_root .. "/" .. path
+      lookup[full_path] = status:sub(1, 1)
+    end
   end
-  state.loading = true
+  return lookup
+end
 
-  local worktree_root = git.find_worktree_info(state.path or vim.fn.getcwd())
-  state.path = worktree_root or state.path or vim.fn.getcwd()
-
+local function render_items(state, worktree_root, status_lookup)
   local context = file_items.create_context()
   context.state = state
   local root = file_items.create_item(context, state.path, "directory")
@@ -24,13 +30,12 @@ M.get_git_status = function(state)
   context.folders[root.path] = root
 
   if worktree_root then
-    local status_lookup = diff.diff_name_status(worktree_root, "main", false)
-    -- Store in worktree cache so the git_status component renderer can find it
     if status_lookup and git.worktrees[worktree_root] then
+      git.worktrees[worktree_root].status_diff = git.worktrees[worktree_root].status_diff or {}
       git.worktrees[worktree_root].status_diff["main"] = status_lookup
     end
-    -- Set git_base so the component looks up from status_diff
     state.git_base_by_worktree = { [worktree_root] = "main" }
+
     if status_lookup then
       for path, status in pairs(status_lookup) do
         if type(status) ~= "table" and status ~= "!" then
@@ -41,9 +46,7 @@ M.get_git_status = function(state)
             if item.type == "unknown" then
               item.type = "file"
             end
-            item.extra = {
-              git_status = status,
-            }
+            item.extra = { git_status = status }
           end
         end
       end
@@ -56,7 +59,35 @@ M.get_git_status = function(state)
   end
   file_items.advanced_sort(root.children, state)
   renderer.show_nodes({ root }, state)
-  state.loading = false
+end
+
+M.get_git_status = function(state)
+  if state.loading then
+    return
+  end
+  state.loading = true
+
+  local worktree_root = git.find_worktree_info(state.path or vim.fn.getcwd())
+  state.path = worktree_root or state.path or vim.fn.getcwd()
+
+  if not worktree_root then
+    render_items(state, nil, nil)
+    state.loading = false
+    return
+  end
+
+  vim.system(
+    { "git", "-C", worktree_root, "diff", "--name-status", "main" },
+    { text = true },
+    vim.schedule_wrap(function(result)
+      local status_lookup = nil
+      if result.code == 0 and result.stdout then
+        status_lookup = parse_name_status(result.stdout, worktree_root)
+      end
+      render_items(state, worktree_root, status_lookup)
+      state.loading = false
+    end)
+  )
 end
 
 return M

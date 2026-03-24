@@ -12,5 +12,11 @@ return {
 
     -- Reuse git_status config for the custom source
     opts.git_diff_main = vim.deepcopy(opts.git_status or {})
+
+    -- Performance: skip per-file git status in the file tree (dedicated git tabs handle this)
+    opts.enable_git_status = false
+    opts.filesystem = opts.filesystem or {}
+    opts.filesystem.async_directory_scan = "always"
+    opts.filesystem.use_libuv_file_watcher = false
   end,
 }
